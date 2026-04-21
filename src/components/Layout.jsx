@@ -2,26 +2,21 @@ import React, { useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { MessageCircle, Users, Calendar, User, Info, Mail, Heart } from 'lucide-react';
 import { useAuth } from '../store/AuthContext';
-import { useSocket } from '../store/SocketContext';
+import { useRealtime } from '../store/RealtimeContext';
 
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const socket = useSocket();
+  const { subscribeToMatchRequests } = useRealtime();
 
   useEffect(() => {
-    if (!socket || !user) return;
-    const handleMatch = ({ room, partner, user: otherUser }) => {
-      const stranger = partner.username === user.username ? otherUser : partner;
-      navigate('/chat/random', { state: { room, stranger } });
-    };
-    socket.on('match_found', handleMatch);
-    
-    return () => {
-      socket.off('match_found', handleMatch);
-    };
-  }, [socket, navigate, user?.username]);
+    if (!user) return;
+    const unsub = subscribeToMatchRequests(user.id, (matchData) => {
+      navigate('/chat/random', { state: { room: matchData.room, stranger: matchData.fromUser } });
+    });
+    return () => unsub();
+  }, [user, subscribeToMatchRequests, navigate]);
 
   const getTitle = () => {
     switch (location.pathname) {

@@ -2,16 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, UserPlus, X, Phone, PhoneOff, PhoneCall, AlertTriangle, ShieldX } from 'lucide-react';
 import { useAuth } from '../store/AuthContext';
-import { useSocket } from '../store/SocketContext';
+import { useRealtime } from '../store/RealtimeContext';
 
 const RandomChat = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { user } = useAuth();
-  const socket = useSocket();
+  const { sendMessage, subscribeMessages, sendSignal, subscribeSignaling } = useRealtime();
   const [messages, setMessages] = useState([]);
   const [inputBox, setInputBox] = useState('');
-  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 mins
+  const [timeLeft, setTimeLeft] = useState(15 * 60);
   const room = state?.room || 'test_room';
   const strangerInit = state?.stranger || { username: 'CosmicOwl404', vibe: 'Chill' };
   const [stranger] = useState(strangerInit);
@@ -22,6 +22,7 @@ const RandomChat = () => {
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
 
+  // Session timer
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -34,75 +35,64 @@ const RandomChat = () => {
         return prev - 1;
       });
     }, 1000);
-    return () => {
-      clearInterval(timer);
-    };
+    return () => clearInterval(timer);
   }, [navigate]);
 
+  // Subscribe to incoming messages
   useEffect(() => {
-    if (!socket) return;
-    
-    socket.on('receive_direct_msg', (msg) => {
-      setMessages(prev => [...prev, msg]);
-    });
-
-    socket.on('call_ended', () => {
-      setShowCall(false);
-      setCallStatus('calling');
-      if (peerConnectionRef.current) peerConnectionRef.current.close();
-      if (localStreamRef.current) localStreamRef.current.getTracks().forEach(t => t.stop());
-      alert(`${stranger.username} ended the call.`);
-    });
-    
-    socket.on('webrtc_offer', async (offer) => {
-      setShowCall(true);
-      setCallStatus('connected');
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        localStreamRef.current = stream;
-
-        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-        peerConnectionRef.current = pc;
-        stream.getTracks().forEach(track => pc.addTrack(track, stream));
-
-        pc.onicecandidate = (event) => {
-          if (event.candidate) socket.emit('webrtc_ice', { room, candidate: event.candidate });
-        };
-
-        pc.ontrack = (event) => {
-          const remoteAudio = document.getElementById('remoteAudio');
-          if (remoteAudio) remoteAudio.srcObject = event.streams[0];
-        };
-
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit('webrtc_answer', { room, answer });
-      } catch (e) {
-        console.error(e);
+    const unsub = subscribeMessages(room, (msg) => {
+      // Only show messages from the OTHER user (we add our own locally)
+      if (msg.user !== user.username) {
+        setMessages(prev => [...prev, msg]);
       }
     });
+    return () => unsub();
+  }, [room, user.username, subscribeMessages]);
 
-    socket.on('webrtc_answer', async (answer) => {
-      if (peerConnectionRef.current) {
-        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+  // Subscribe to WebRTC signaling
+  useEffect(() => {
+    const unsub = subscribeSignaling(room, user.username, async (signal) => {
+      if (signal.type === 'offer') {
+        setShowCall(true);
+        setCallStatus('connected');
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          localStreamRef.current = stream;
+          const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+          peerConnectionRef.current = pc;
+          stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+          pc.onicecandidate = (event) => {
+            if (event.candidate) sendSignal(room, 'ice', event.candidate, user.username);
+          };
+          pc.ontrack = (event) => {
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (remoteAudio) remoteAudio.srcObject = event.streams[0];
+          };
+
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.data));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          sendSignal(room, 'answer', answer, user.username);
+        } catch (e) { console.error(e); }
+      } else if (signal.type === 'answer') {
+        if (peerConnectionRef.current) {
+          await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(signal.data));
+        }
+      } else if (signal.type === 'ice') {
+        if (peerConnectionRef.current) {
+          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(signal.data));
+        }
+      } else if (signal.type === 'end_call') {
+        setShowCall(false);
+        setCallStatus('calling');
+        if (peerConnectionRef.current) peerConnectionRef.current.close();
+        if (localStreamRef.current) localStreamRef.current.getTracks().forEach(t => t.stop());
+        alert(`${stranger.username} ended the call.`);
       }
     });
-
-    socket.on('webrtc_ice', async (candidate) => {
-      if (peerConnectionRef.current) {
-        await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
-      }
-    });
-
-    return () => {
-      socket.off('receive_direct_msg');
-      socket.off('call_ended');
-      socket.off('webrtc_offer');
-      socket.off('webrtc_answer');
-      socket.off('webrtc_ice');
-    };
-  }, [socket, room, stranger.username]);
+    return () => unsub();
+  }, [room, user.username, stranger.username, sendSignal, subscribeSignaling]);
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -114,23 +104,21 @@ const RandomChat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  useEffect(() => { scrollToBottom(); }, [messages]);
 
-  const sendMessage = (e) => {
+  const handleSendMessage = (e) => {
     e.preventDefault();
     if (!inputBox.trim()) return;
 
-    setMessages(prev => [...prev, {
+    const msg = {
       id: Date.now(),
       user: user.username,
       text: inputBox,
       isMe: true,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }]);
-    
-    socket.emit('send_direct_msg', { room, message: inputBox, user });
+    };
+    setMessages(prev => [...prev, msg]);
+    sendMessage(room, inputBox, user.username);
     setInputBox('');
   };
 
@@ -140,18 +128,13 @@ const RandomChat = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       localStreamRef.current = stream;
-
       const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
       peerConnectionRef.current = pc;
-
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
       pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          socket.emit('webrtc_ice', { room, candidate: event.candidate });
-        }
+        if (event.candidate) sendSignal(room, 'ice', event.candidate, user.username);
       };
-
       pc.ontrack = (event) => {
         const remoteAudio = document.getElementById('remoteAudio');
         if (remoteAudio) remoteAudio.srcObject = event.streams[0];
@@ -160,7 +143,7 @@ const RandomChat = () => {
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      socket.emit('webrtc_offer', { room, offer });
+      sendSignal(room, 'offer', offer, user.username);
     } catch (err) {
       console.error(err);
       alert('Microphone access denied or unavailable.');
@@ -173,7 +156,7 @@ const RandomChat = () => {
     if (localStreamRef.current) localStreamRef.current.getTracks().forEach(t => t.stop());
     setShowCall(false);
     setCallStatus('calling');
-    socket.emit('end_call', { room });
+    sendSignal(room, 'end_call', {}, user.username);
   };
 
   const handleAction = (action) => {
@@ -239,7 +222,7 @@ const RandomChat = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Action Bar (Below messages, above input) */}
+      {/* Action Bar */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', padding: '0.5rem', backgroundColor: 'var(--bg-dark)' }}>
         <button onClick={() => handleAction('circle')} className="btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.5rem', fontSize: '0.8rem' }}>
           <UserPlus size={16} /> Add to Circle
@@ -256,7 +239,7 @@ const RandomChat = () => {
       </div>
 
       {/* Input */}
-      <form onSubmit={sendMessage} style={{ 
+      <form onSubmit={handleSendMessage} style={{ 
         padding: '1rem', borderTop: '1px solid var(--border-color)', 
         backgroundColor: 'var(--surface-dark)', display: 'flex', gap: '0.5rem' 
       }}>

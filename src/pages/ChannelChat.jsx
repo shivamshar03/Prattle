@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send } from 'lucide-react';
 import { useAuth } from '../store/AuthContext';
-import { useSocket } from '../store/SocketContext';
+import { useRealtime } from '../store/RealtimeContext';
 
 const defaultChannels = {
   '1': { name: 'Weekend Chill' },
@@ -16,7 +16,7 @@ const ChannelChat = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const socket = useSocket();
+  const { sendChannelMessage, subscribeChannelMessages } = useRealtime();
   const [messages, setMessages] = useState([]);
   const [inputBox, setInputBox] = useState('');
   const messagesEndRef = useRef(null);
@@ -24,34 +24,35 @@ const ChannelChat = () => {
   const channel = defaultChannels[id];
 
   useEffect(() => {
-    if (!socket || !channel) return;
+    if (!channel) return;
     
-    // Reset and mock system message
-    setMessages([{ id: Date.now(), user: 'System', text: `Welcome to ${channel?.name}! Messages are live.`, isSystem: true, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-    
-    socket.emit('join_channel', id);
+    setMessages([{
+      id: Date.now(),
+      user: 'System',
+      text: `Welcome to ${channel?.name}! Messages are live.`,
+      isSystem: true,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
 
-    socket.on('receive_channel_msg', (msg) => {
-      setMessages(prev => [...prev, msg]);
+    const unsub = subscribeChannelMessages(id, (msg) => {
+      // Only show messages from OTHER users (we add our own locally)
+      if (msg.user !== user.username) {
+        setMessages(prev => [...prev, msg]);
+      }
     });
 
-    return () => {
-      socket.emit('leave_channel', id);
-      socket.off('receive_channel_msg');
-    };
-  }, [socket, id, channel?.name]);
+    return () => unsub();
+  }, [id, channel?.name, user.username, subscribeChannelMessages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  useEffect(() => { scrollToBottom(); }, [messages]);
 
   if (!channel) return <div className="p-4">Channel not found</div>;
 
-  const sendMessage = (e) => {
+  const handleSendMessage = (e) => {
     e.preventDefault();
     if (!inputBox.trim()) return;
 
@@ -63,7 +64,7 @@ const ChannelChat = () => {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }]);
     
-    socket.emit('send_channel_msg', { channelId: id, message: inputBox, user });
+    sendChannelMessage(id, inputBox, user.username);
     setInputBox('');
   };
 
@@ -123,7 +124,7 @@ const ChannelChat = () => {
       </div>
 
       {/* Input */}
-      <form onSubmit={sendMessage} style={{ 
+      <form onSubmit={handleSendMessage} style={{ 
         padding: '1rem', borderTop: '1px solid var(--border-color)', 
         backgroundColor: 'var(--surface-dark)', display: 'flex', gap: '0.5rem' 
       }}>

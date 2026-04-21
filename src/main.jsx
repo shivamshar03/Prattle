@@ -3,17 +3,17 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { AuthProvider } from './store/AuthContext.jsx';
-import { SocketProvider } from './store/SocketContext.jsx';
+import { RealtimeProvider } from './store/RealtimeContext.jsx';
 import './index.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
-      <SocketProvider>
+      <RealtimeProvider>
         <BrowserRouter>
           <App />
         </BrowserRouter>
-      </SocketProvider>
+      </RealtimeProvider>
     </AuthProvider>
   </StrictMode>,
 );

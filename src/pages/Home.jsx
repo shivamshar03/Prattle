@@ -1,44 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/AuthContext';
-import { useSocket } from '../store/SocketContext';
+import { useRealtime } from '../store/RealtimeContext';
 import { Search } from 'lucide-react';
 
 const Home = () => {
   const { user } = useAuth();
-  const socket = useSocket();
+  const { subscribeOnlineUsers, findMatch, leaveMatchQueue, directMatch } = useRealtime();
   const navigate = useNavigate();
   const [isSearching, setIsSearching] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   useEffect(() => {
-    if (!socket || !user) return;
-    
-    socket.emit('client_ready', user);
+    if (!user) return;
+    const unsub = subscribeOnlineUsers((users) => setOnlineUsers(users));
+    return () => unsub();
+  }, [user, subscribeOnlineUsers]);
 
-    const handleOnlineUsers = (users) => setOnlineUsers(users);
-    socket.on('online_users_update', handleOnlineUsers);
-
-    return () => {
-      socket.off('online_users_update', handleOnlineUsers);
-    };
-  }, [socket, user]);
-
-  const startDirectMatch = (targetSocketId) => {
-    socket.emit('direct_match', { targetSocketId, user });
+  const startDirectMatch = async (targetUser) => {
+    const result = await directMatch(targetUser, user);
+    if (result) {
+      navigate('/chat/random', { state: { room: result.room, stranger: result.stranger } });
+    }
   };
 
   useEffect(() => {
     return () => {
-      if (isSearching && socket) {
-        socket.emit('leave_match_queue');
+      if (isSearching) {
+        leaveMatchQueue(user.id);
       }
     };
-  }, [isSearching, socket]);
+  }, [isSearching, user?.id, leaveMatchQueue]);
 
-  const startMatchmaking = () => {
+  const startMatchmaking = async () => {
     setIsSearching(true);
-    socket.emit('find_match', user);
+    const result = await findMatch(user);
+    if (result) {
+      setIsSearching(false);
+      navigate('/chat/random', { state: { room: result.room, stranger: result.stranger } });
+    }
+    // If null, we're in the queue — Layout.jsx will catch the match via subscribeToMatchRequests
   };
 
   return (
@@ -94,7 +95,7 @@ const Home = () => {
           {onlineUsers.filter(u => u.username !== user.username).map(u => (
             <span 
               key={u.id} 
-              onClick={() => startDirectMatch(u.socketId)}
+              onClick={() => startDirectMatch(u)}
               style={{ 
                 backgroundColor: 'rgba(139, 92, 246, 0.1)', 
                 border: '1px solid var(--border-color)',
