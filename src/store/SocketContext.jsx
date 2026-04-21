@@ -11,7 +11,10 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (user) {
       const hostname = window.location.hostname || 'localhost';
-      const newSocket = io(`http://${hostname}:3001`);
+      const defaultBackend = `http://${hostname}:3001`;
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || defaultBackend;
+      
+      const newSocket = io(backendUrl);
       setSocket(newSocket);
 
       return () => newSocket.close();

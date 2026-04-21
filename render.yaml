@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: prattle-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node index.js
+    rootDir: server
+    envVars:
+      - key: NODE_ENV
+        value: production
