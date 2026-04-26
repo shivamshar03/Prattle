@@ -165,17 +165,33 @@ export const RealtimeProvider = ({ children }) => {
   }, []);
 
   // --- WebRTC Signaling ---
-  const sendSignal = useCallback(async (roomId, type, data, from) => {
+  const sendSignal = useCallback(async (roomId, type, data, from, extra = {}) => {
+    // Serialize WebRTC objects to plain JSON for Firebase
+    let plainData = data;
+    if (type === 'offer' || type === 'answer') {
+      plainData = { type: data.type, sdp: data.sdp };
+    } else if (type === 'ice') {
+      plainData = data ? {
+        candidate: data.candidate,
+        sdpMid: data.sdpMid,
+        sdpMLineIndex: data.sdpMLineIndex,
+      } : null;
+    }
     const sigRef = push(ref(db, `rooms/${roomId}/signaling`));
-    await set(sigRef, { type, data, from, timestamp: Date.now() });
+    await set(sigRef, { type, data: plainData, from, timestamp: Date.now(), ...extra });
+  }, []);
+
+  const clearSignaling = useCallback(async (roomId) => {
+    await remove(ref(db, `rooms/${roomId}/signaling`));
   }, []);
 
   const subscribeSignaling = useCallback((roomId, myUsername, callback) => {
     const sigRef = ref(db, `rooms/${roomId}/signaling`);
+    const startTime = Date.now();
     const unsub = onChildAdded(sigRef, (snapshot) => {
       const signal = snapshot.val();
-      // Only process signals from the OTHER user
-      if (signal && signal.from !== myUsername) {
+      // Only process signals from the OTHER user and ignore stale signals (>30s old)
+      if (signal && signal.from !== myUsername && (Date.now() - signal.timestamp) < 30000) {
         callback(signal);
       }
     });
@@ -193,6 +209,7 @@ export const RealtimeProvider = ({ children }) => {
     sendChannelMessage,
     subscribeChannelMessages,
     sendSignal,
+    clearSignaling,
     subscribeSignaling,
   };
 
