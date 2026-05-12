@@ -63,7 +63,7 @@ const Layout = () => {
       <aside className="sidebar">
         <div style={{ marginBottom: '2.5rem', paddingLeft: '1rem' }}>
           <img src="/logo.png" alt="Prattle" style={{ height: '64px' }} />
-          <p style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.08em', color: 'var(--primary)', margin: '0.5rem 0 0 0', textTransform: 'uppercase' }}>Chat. Connect. Explore.</p>
+          {/* <p style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.08em', color: 'var(--primary)', margin: '0.5rem 0 0 0', textTransform: 'uppercase' }}>Chat. Connect. Explore.</p> */}
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {navLinks.map(link => (
@@ -125,22 +125,22 @@ const Layout = () => {
               <strong style={{ color: 'var(--primary)' }}>{incomingChatReq.fromUser.username}</strong> wants to chat with you!
             </p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <button 
-                className="btn-outline" 
+              <button
+                className="btn-outline"
                 onClick={() => {
                   sendMessage(incomingChatReq.room, `${user.username} rejected the chat request.`, 'System');
                   setIncomingChatReq(null);
-                }} 
+                }}
                 style={{ borderColor: '#ef4444', color: '#ef4444', flex: 1, padding: '0.8rem' }}
               >
                 No
               </button>
-              <button 
-                className="btn-primary" 
+              <button
+                className="btn-primary"
                 onClick={() => {
                   navigate('/chat/random', { state: { room: incomingChatReq.room, stranger: incomingChatReq.fromUser } });
                   setIncomingChatReq(null);
-                }} 
+                }}
                 style={{ flex: 1, padding: '0.8rem' }}
               >
                 Yes
