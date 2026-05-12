@@ -17,7 +17,7 @@ const ICE_SERVERS = {
 const RandomChat = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const { user } = useAuth();
+  const { user, addToCircle } = useAuth();
   const { sendMessage, subscribeMessages, sendSignal, subscribeSignaling, clearSignaling } = useRealtime();
   const [messages, setMessages] = useState([]);
   const [inputBox, setInputBox] = useState('');
@@ -336,8 +336,8 @@ const RandomChat = () => {
   const handleAction = (action) => {
     if (action === 'end') navigate('/');
     if (action === 'circle') {
+      addToCircle({ username: stranger.username, id: stranger.id || stranger.username });
       alert(`${stranger.username} added to your Circle!`);
-      navigate('/');
     }
   };
 

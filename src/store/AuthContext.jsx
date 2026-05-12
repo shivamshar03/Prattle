@@ -16,20 +16,55 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const savedUser = localStorage.getItem('prattle_user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const parsed = JSON.parse(savedUser);
+        // If user lacks required fields (old format), force re-onboard
+        if (!parsed.gender || !parsed.age) {
+          localStorage.removeItem('prattle_user');
+          setUser(null);
+        } else {
+          setUser(parsed);
+        }
+      } catch {
+        localStorage.removeItem('prattle_user');
+      }
     }
     setLoading(false);
   }, []);
 
-  const login = (interests) => {
+  const login = ({ username, interests = [], gender, age }) => {
     const newUser = {
       id: window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substring(2),
-      username: generateUsername(),
-      interests,
+      username: username || generateUsername(),
+      interests: Array.isArray(interests) ? interests : [],
+      gender,
+      age: Number(age),
+      circles: [],
       joinedAt: new Date().toISOString()
     };
     localStorage.setItem('prattle_user', JSON.stringify(newUser));
     setUser(newUser);
+  };
+
+  const updateUser = (updates) => {
+    const updated = { ...user, ...updates };
+    localStorage.setItem('prattle_user', JSON.stringify(updated));
+    setUser(updated);
+  };
+
+  const addToCircle = (person) => {
+    const existing = user.circles || [];
+    if (existing.find(c => c.username === person.username)) return;
+    const updated = { ...user, circles: [...existing, { ...person, addedAt: Date.now() }] };
+    localStorage.setItem('prattle_user', JSON.stringify(updated));
+    setUser(updated);
+  };
+
+  const removeFromCircle = (username) => {
+    const existing = user.circles || [];
+    const updated = { ...user, circles: existing.filter(c => c.username !== username) };
+    localStorage.setItem('prattle_user', JSON.stringify(updated));
+    setUser(updated);
   };
 
   const logout = () => {
@@ -40,7 +75,7 @@ export const AuthProvider = ({ children }) => {
   if (loading) return null;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, addToCircle, removeFromCircle }}>
       {children}
     </AuthContext.Provider>
   );

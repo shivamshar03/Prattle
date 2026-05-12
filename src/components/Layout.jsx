@@ -30,7 +30,7 @@ const Layout = () => {
     }
   };
 
-  const immersiveRoutes = ['/chat/random', '/meetups/create'];
+  const immersiveRoutes = ['/chat/random', '/meetups/create', '/profile/edit'];
   const isImmersive = immersiveRoutes.includes(location.pathname) || location.pathname.startsWith('/channels/');
 
   const topNavClass = isImmersive ? 'top-nav mobile-hidden' : 'top-nav';

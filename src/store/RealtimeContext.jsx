@@ -20,6 +20,8 @@ export const RealtimeProvider = ({ children }) => {
       id: user.id,
       username: user.username,
       interests: user.interests || [],
+      gender: user.gender || '',
+      age: user.age || null,
       joinedAt: user.joinedAt,
       lastSeen: Date.now()
     });
