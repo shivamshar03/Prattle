@@ -153,6 +153,19 @@ const Home = () => {
         </div>
       </div>
 
+      {/* WhatsApp Community Banner */}
+      <div className="glass-panel" style={{ marginTop: '2rem', background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.2)', textAlign: 'center' }}>
+        <h4 style={{ margin: '0 0 0.5rem', color: '#22c55e', fontSize: '1rem' }}>🌟 We are building a community!</h4>
+        <p className="text-muted" style={{ fontSize: '0.85rem', margin: '0 0 1rem' }}>
+          Join our official WhatsApp group to connect with other members, get updates, and share your thoughts.
+        </p>
+        <a href="https://chat.whatsapp.com/FIRhaIZX3EBEs07pLkbC4N" target="_blank" rel="noopener noreferrer"
+          className="btn-primary"
+          style={{ display: 'inline-block', backgroundColor: '#25D366', color: 'white', textDecoration: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}>
+          Join WhatsApp Group
+        </a>
+      </div>
+
       <style dangerouslySetInnerHTML={{__html:`
         @keyframes pulse {
           0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }

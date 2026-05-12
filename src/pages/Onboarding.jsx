@@ -78,6 +78,7 @@ const Onboarding = () => {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <img src="/logo.png" alt="Prattle" style={{ height: '72px', margin: '0 auto 1rem auto', display: 'block', animation: 'pulse 2s infinite' }} />
+          <p style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '0.08em', color: 'var(--primary)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Chat. Connect. Explore.</p>
           <p className="text-muted" style={{ fontSize: '0.9rem' }}>Anonymous to real connections in Indore.</p>
         </div>
 
@@ -188,6 +189,27 @@ const Onboarding = () => {
           No sign-up required. Stay anonymous until you're ready.<br/>
           By joining, you confirm you are 18 years or older.
         </p>
+
+        {/* WhatsApp Community Banner */}
+        <div style={{
+          marginTop: '1.5rem', background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.2)',
+          borderRadius: '12px', padding: '1.25rem', textAlign: 'center'
+        }}>
+          <p style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>
+            🌟 We're building a community!
+          </p>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Join our WhatsApp group to connect with members.
+          </p>
+          <a href="https://chat.whatsapp.com/FIRhaIZX3EBEs07pLkbC4N" target="_blank" rel="noopener noreferrer"
+            style={{
+              display: 'inline-block', backgroundColor: '#25D366', color: 'white', textDecoration: 'none',
+              padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+            }}>
+            Join WhatsApp Group
+          </a>
+        </div>
       </div>
     </div>
   );
