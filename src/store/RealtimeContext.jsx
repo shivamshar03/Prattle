@@ -200,6 +200,35 @@ export const RealtimeProvider = ({ children }) => {
     return unsub;
   }, []);
 
+  // --- Meetups ---
+  const subscribeMeetups = useCallback((callback) => {
+    const unsub = onValue(ref(db, 'meetups'), (snapshot) => {
+      const data = snapshot.val();
+      callback(data ? Object.values(data) : []);
+    });
+    return unsub;
+  }, []);
+
+  const createMeetupFirebase = useCallback(async (meetupData) => {
+    await set(ref(db, `meetups/${meetupData.id}`), meetupData);
+  }, []);
+
+  const deleteMeetupFirebase = useCallback(async (meetupId) => {
+    await remove(ref(db, `meetups/${meetupId}`));
+  }, []);
+
+  const joinMeetupFirebase = useCallback(async (meetupId, username) => {
+    const meetupRef = ref(db, `meetups/${meetupId}`);
+    const snap = await get(meetupRef);
+    if (snap.exists()) {
+      const meetup = snap.val();
+      const attendees = meetup.attendees || [];
+      if (!attendees.includes(username)) {
+        await set(ref(db, `meetups/${meetupId}/attendees`), [...attendees, username]);
+      }
+    }
+  }, []);
+
   const value = {
     subscribeOnlineUsers,
     findMatch,
@@ -213,6 +242,10 @@ export const RealtimeProvider = ({ children }) => {
     sendSignal,
     clearSignaling,
     subscribeSignaling,
+    subscribeMeetups,
+    createMeetupFirebase,
+    deleteMeetupFirebase,
+    joinMeetupFirebase,
   };
 
   return (

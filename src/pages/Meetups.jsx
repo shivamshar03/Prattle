@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/AuthContext';
 import { useRealtime } from '../store/RealtimeContext';
@@ -7,47 +7,25 @@ import { MapPin, Calendar as CalIcon, Plus, Users, Clock, ArrowLeft } from 'luci
 const Meetups = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [meetups, setMeetups] = useState(() => {
-    const saved = localStorage.getItem('prattle_meetups');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Filter out legacy dummy meetups (IDs 1 and 2) that might have been saved to local storage
-        const realMeetups = parsed.filter(m => m.id !== 1 && m.id !== 2);
-        // Sync the cleaned list back to local storage
-        if (realMeetups.length !== parsed.length) {
-          localStorage.setItem('prattle_meetups', JSON.stringify(realMeetups));
-        }
-        return realMeetups;
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  });
+  const { subscribeMeetups, joinMeetupFirebase, deleteMeetupFirebase } = useRealtime();
+  const [meetups, setMeetups] = useState([]);
+
+  useEffect(() => {
+    const unsub = subscribeMeetups((data) => {
+      // Sort meetups by date created (id) descending or date of meetup
+      const sorted = data.sort((a, b) => b.id - a.id);
+      setMeetups(sorted);
+    });
+    return () => unsub();
+  }, [subscribeMeetups]);
 
   const joinMeetup = (meetupId) => {
-    setMeetups(prev => {
-      const updated = prev.map(m => {
-        if (m.id === meetupId) {
-          const currentAttendees = m.attendees || [];
-          if (currentAttendees.includes(user?.username)) return m;
-          return { ...m, attendees: [...currentAttendees, user?.username] };
-        }
-        return m;
-      });
-      localStorage.setItem('prattle_meetups', JSON.stringify(updated));
-      return updated;
-    });
+    joinMeetupFirebase(meetupId, user.username);
   };
 
   const deleteMeetup = (meetupId) => {
     if (!window.confirm('Delete this meetup?')) return;
-    setMeetups(prev => {
-      const updated = prev.filter(m => m.id !== meetupId);
-      localStorage.setItem('prattle_meetups', JSON.stringify(updated));
-      return updated;
-    });
+    deleteMeetupFirebase(meetupId);
   };
 
   const formatDate = (dateStr) => {

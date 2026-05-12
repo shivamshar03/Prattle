@@ -49,12 +49,16 @@ const AdminDashboard = () => {
     return () => unsub();
   }, []);
 
-  // Load meetups from localStorage (admin runs in same browser)
+  // Load meetups from Firebase
   useEffect(() => {
-    const m = JSON.parse(localStorage.getItem('prattle_meetups') || '[]');
-    setMeetups(m);
-    setStats(p => ({ ...p, meetups: m.length }));
-  }, [tab]);
+    const unsub = onValue(ref(db, 'meetups'), (snap) => {
+      const data = snap.val() || {};
+      const m = Object.values(data);
+      setMeetups(m);
+      setStats(p => ({ ...p, meetups: m.length }));
+    });
+    return () => unsub();
+  }, []);
 
   const removeUser = async (userId) => {
     if (!window.confirm('Remove this user? They will be disconnected.')) return;
@@ -84,12 +88,10 @@ const AdminDashboard = () => {
     }
   };
 
-  const deleteMeetup = (meetupId) => {
+  const deleteMeetup = async (meetupId) => {
     if (!window.confirm('Delete this meetup?')) return;
     try {
-      const updated = meetups.filter(m => m.id !== meetupId);
-      localStorage.setItem('prattle_meetups', JSON.stringify(updated));
-      setMeetups(updated);
+      await remove(ref(db, `meetups/${meetupId}`));
     } catch (error) {
       alert('Failed to delete meetup: ' + error.message);
     }

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/AuthContext';
+import { useRealtime } from '../store/RealtimeContext';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 
 const CreateMeetup = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { createMeetupFirebase } = useRealtime();
   const [form, setForm] = useState({ title: '', desc: '', date: '', time: '', location: '' });
   const [errors, setErrors] = useState({});
 
@@ -49,9 +51,7 @@ const CreateMeetup = () => {
       attendees: [user.username]
     };
 
-    const existing = JSON.parse(localStorage.getItem('prattle_meetups') || '[]');
-    existing.push(newMeetup);
-    localStorage.setItem('prattle_meetups', JSON.stringify(existing));
+    createMeetupFirebase(newMeetup);
 
     navigate('/meetups');
   };
