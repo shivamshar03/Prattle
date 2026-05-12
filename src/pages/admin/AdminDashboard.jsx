@@ -57,26 +57,42 @@ const AdminDashboard = () => {
   }, [tab]);
 
   const removeUser = async (userId) => {
-    if (!confirm('Remove this user? They will be disconnected.')) return;
-    await remove(ref(db, `online_users/${userId}`));
+    if (!window.confirm('Remove this user? They will be disconnected.')) return;
+    try {
+      await remove(ref(db, `online_users/${userId}`));
+    } catch (error) {
+      alert('Failed to remove user: ' + error.message);
+    }
   };
 
   const deleteRoom = async (roomId) => {
-    if (!confirm('Delete this entire chat room and all messages?')) return;
-    await remove(ref(db, `rooms/${roomId}`));
-    if (selectedChat === roomId) { setSelectedChat(null); setChatMessages([]); }
+    if (!window.confirm('Delete this entire chat room and all messages?')) return;
+    try {
+      await remove(ref(db, `rooms/${roomId}`));
+      if (selectedChat === roomId) { setSelectedChat(null); setChatMessages([]); }
+    } catch (error) {
+      alert('Failed to delete room: ' + error.message);
+    }
   };
 
   const deleteChannel = async (channelId) => {
-    if (!confirm('Delete all messages in this channel?')) return;
-    await remove(ref(db, `channels/${channelId}`));
+    if (!window.confirm('Delete all messages in this channel?')) return;
+    try {
+      await remove(ref(db, `channels/${channelId}`));
+    } catch (error) {
+      alert('Failed to delete channel: ' + error.message);
+    }
   };
 
   const deleteMeetup = (meetupId) => {
-    if (!confirm('Delete this meetup?')) return;
-    const updated = meetups.filter(m => m.id !== meetupId);
-    localStorage.setItem('prattle_meetups', JSON.stringify(updated));
-    setMeetups(updated);
+    if (!window.confirm('Delete this meetup?')) return;
+    try {
+      const updated = meetups.filter(m => m.id !== meetupId);
+      localStorage.setItem('prattle_meetups', JSON.stringify(updated));
+      setMeetups(updated);
+    } catch (error) {
+      alert('Failed to delete meetup: ' + error.message);
+    }
   };
 
   const viewChat = async (roomId) => {
