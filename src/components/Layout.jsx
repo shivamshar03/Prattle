@@ -27,7 +27,7 @@ const Layout = () => {
 
   const getTitle = () => {
     switch (location.pathname) {
-      case '/': return <img src="/logo.png" alt="Prattle" style={{ height: '44px', display: 'block' }} />;
+      case '/': return <img src="/logo.png" alt="Prattle" style={{ height: '124px', display: 'block', marginTop: "-20px", marginBottom: "-20px" }} />;
       case '/channels': return 'Community';
       case '/meetups': return 'Meetups';
       case '/profile': return 'My Vibe';
@@ -62,7 +62,7 @@ const Layout = () => {
       {/* Desktop Sidebar */}
       <aside className="sidebar">
         <div style={{ marginBottom: '2.5rem', paddingLeft: '1rem' }}>
-          <img src="/logo.png" alt="Prattle" style={{ height: '64px' }} />
+          <img src="/logo.png" alt="Prattle" style={{ height: '100px' }} />
           {/* <p style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.08em', color: 'var(--primary)', margin: '0.5rem 0 0 0', textTransform: 'uppercase' }}>Chat. Connect. Explore.</p> */}
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
