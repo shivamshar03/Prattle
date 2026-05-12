@@ -77,16 +77,7 @@ const Onboarding = () => {
       <div className="glass-panel slide-up" style={{ maxWidth: '440px', width: '100%' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <div style={{
-            width: '72px', height: '72px', borderRadius: '50%', margin: '0 auto 1.25rem auto',
-            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 30px rgba(139, 92, 246, 0.4)',
-            animation: 'pulse 2s infinite'
-          }}>
-            <Sparkles size={32} color="white" />
-          </div>
-          <h1 className="text-gradient" style={{ fontSize: '2.2rem', marginBottom: '0.4rem' }}>Prattle</h1>
+          <img src="/logo.png" alt="Prattle" style={{ height: '72px', margin: '0 auto 1rem auto', display: 'block', animation: 'pulse 2s infinite' }} />
           <p className="text-muted" style={{ fontSize: '0.9rem' }}>Anonymous to real connections in Indore.</p>
         </div>
 

@@ -27,7 +27,7 @@ const Layout = () => {
 
   const getTitle = () => {
     switch (location.pathname) {
-      case '/': return 'Prattle';
+      case '/': return <img src="/logo.png" alt="Prattle" style={{ height: '32px', display: 'block' }} />;
       case '/channels': return 'Community';
       case '/meetups': return 'Meetups';
       case '/profile': return 'My Vibe';
@@ -61,7 +61,9 @@ const Layout = () => {
     <div className="app-container layout-grid fade-in">
       {/* Desktop Sidebar */}
       <aside className="sidebar">
-        <h1 className="header-title text-gradient" style={{ fontSize: '2rem', marginBottom: '2rem', paddingLeft: '1rem' }}>Prattle</h1>
+        <div style={{ marginBottom: '2rem', paddingLeft: '1rem' }}>
+          <img src="/logo.png" alt="Prattle" style={{ height: '40px' }} />
+        </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {navLinks.map(link => (
             <NavLink key={link.to} to={link.to} end={link.end}
