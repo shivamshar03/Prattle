@@ -22,11 +22,11 @@ const CreateMeetup = () => {
 
   const validate = () => {
     const errs = {};
-    if (!form.title.trim()) errs.title = 'Title is required';
-    if (!form.desc.trim()) errs.desc = 'Description is required';
+    if (!form.title?.trim()) errs.title = 'Title is required';
+    if (!form.desc?.trim()) errs.desc = 'Description is required';
     if (!form.date) errs.date = 'Date is required';
     if (!form.time) errs.time = 'Time is required';
-    if (!form.location.trim()) errs.location = 'Location is required';
+    if (!form.location?.trim()) errs.location = 'Location is required';
     return errs;
   };
 

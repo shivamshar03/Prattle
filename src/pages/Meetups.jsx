@@ -9,19 +9,30 @@ const Meetups = () => {
   const { user } = useAuth();
   const [meetups, setMeetups] = useState(() => {
     const saved = localStorage.getItem('prattle_meetups');
-    if (saved) return JSON.parse(saved);
-    return [
-      { id: 1, title: 'Startup Networking Coffee', location: 'Caffeine Rush, Palasia', date: '2026-05-15', time: '18:00', host: 'NeonGhost99', attendees: ['NeonGhost99'], desc: 'Casual discussion about tech in Indore.' },
-      { id: 2, title: 'Group Workout & Run', location: 'Nehru Stadium', date: '2026-05-16', time: '06:00', host: 'FitnessFreak21', attendees: ['FitnessFreak21'], desc: 'Morning 5k run followed by basic workout.' }
-    ];
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Filter out legacy dummy meetups (IDs 1 and 2) that might have been saved to local storage
+        const realMeetups = parsed.filter(m => m.id !== 1 && m.id !== 2);
+        // Sync the cleaned list back to local storage
+        if (realMeetups.length !== parsed.length) {
+          localStorage.setItem('prattle_meetups', JSON.stringify(realMeetups));
+        }
+        return realMeetups;
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
   const joinMeetup = (meetupId) => {
     setMeetups(prev => {
       const updated = prev.map(m => {
         if (m.id === meetupId) {
-          if (m.attendees.includes(user.username)) return m;
-          return { ...m, attendees: [...m.attendees, user.username] };
+          const currentAttendees = m.attendees || [];
+          if (currentAttendees.includes(user?.username)) return m;
+          return { ...m, attendees: [...currentAttendees, user?.username] };
         }
         return m;
       });
@@ -31,7 +42,7 @@ const Meetups = () => {
   };
 
   const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
+    const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`);
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
@@ -73,8 +84,9 @@ const Meetups = () => {
       ) : (
         <div className="grid-list">
           {meetups.map((m, i) => {
-            const isJoined = m.attendees.includes(user.username);
-            const isHost = m.host === user.username;
+            const attendees = m.attendees || [];
+            const isJoined = attendees.includes(user?.username);
+            const isHost = m.host === user?.username;
             return (
               <div key={m.id} className="glass-panel" style={{ padding: '1.25rem', animation: 'slideUp 0.3s ease forwards', animationDelay: `${i * 0.08}s`, opacity: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
@@ -96,7 +108,7 @@ const Meetups = () => {
                     <Clock size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} /> {formatTime(m.time)}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    <Users size={15} style={{ flexShrink: 0 }} /> {m.attendees.length} going • Hosted by {m.host}
+                    <Users size={15} style={{ flexShrink: 0 }} /> {attendees.length} going • Hosted by {m.host}
                   </div>
                 </div>
 
