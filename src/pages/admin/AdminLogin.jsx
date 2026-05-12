@@ -39,7 +39,8 @@ const AdminLogin = () => {
       <div className="glass-panel slide-up" style={{ maxWidth: '400px', width: '100%', padding: '2.5rem' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img src="/logo.png" alt="Prattle Admin" style={{ height: '48px', margin: '0 auto 1rem auto', display: 'block' }} />
+          <img src="/logo.png" alt="Prattle Admin" style={{ height: '80px', margin: '0 auto 1.25rem auto', display: 'block' }} />
+          <p style={{ fontWeight: 800, fontSize: '0.9rem', letterSpacing: '0.08em', color: 'var(--primary)', marginBottom: '1rem', textTransform: 'uppercase' }}>Chat. Connect. Explore.</p>
           <h1 style={{ fontSize: '1.8rem', marginBottom: '0.3rem', color: 'var(--text-main)' }}>Admin Panel</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
             Prattle Control Center

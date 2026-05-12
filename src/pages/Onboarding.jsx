@@ -77,7 +77,7 @@ const Onboarding = () => {
       <div className="glass-panel slide-up" style={{ maxWidth: '440px', width: '100%' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <img src="/logo.png" alt="Prattle" style={{ height: '72px', margin: '0 auto 1rem auto', display: 'block', animation: 'pulse 2s infinite' }} />
+          <img src="/logo.png" alt="Prattle" style={{ height: '100px', margin: '0 auto 1.25rem auto', display: 'block', animation: 'pulse 2s infinite' }} />
           <p style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '0.08em', color: 'var(--primary)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Chat. Connect. Explore.</p>
           <p className="text-muted" style={{ fontSize: '0.9rem' }}>Anonymous to real connections in Indore.</p>
         </div>
