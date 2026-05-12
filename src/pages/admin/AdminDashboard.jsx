@@ -146,7 +146,7 @@ const AdminDashboard = () => {
     { id: 'chats', label: 'Chats', icon: <MessageSquare size={18} />, count: stats.rooms },
     { id: 'channels', label: 'Channels', icon: <Hash size={18} />, count: stats.channels },
     { id: 'meetups', label: 'Meetups', icon: <Calendar size={18} />, count: stats.meetups },
-    { id: 'feedback', label: 'Feedback', icon: <Mail size={18} />, count: stats.feedback },
+    { id: 'feedback', label: 'Contact Us', icon: <Mail size={18} />, count: stats.feedback },
   ];
 
   const sty = {
@@ -184,7 +184,7 @@ const AdminDashboard = () => {
             { label: 'Chat Rooms', value: stats.rooms, color: '#8b5cf6', icon: '💬' },
             { label: 'Channels', value: stats.channels, color: '#3b82f6', icon: '#️⃣' },
             { label: 'Meetups', value: stats.meetups, color: '#f97316', icon: '📅' },
-            { label: 'Feedback', value: stats.feedback, color: '#eab308', icon: '✉️' },
+            { label: 'Contact Us', value: stats.feedback, color: '#eab308', icon: '✉️' },
           ].map(s => (
             <div key={s.label} style={sty.stat}>
               <p style={{ fontSize: '1.8rem', fontWeight: 700, color: s.color, marginBottom: '0.25rem' }}>{s.icon} {s.value}</p>
@@ -398,7 +398,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* FEEDBACK TAB */}
+        {/* CONTACT US TAB */}
         {tab === 'feedback' && (
           <div>
             {feedback.length === 0 ? (
