@@ -239,12 +239,24 @@ const AdminDashboard = () => {
                     return a[0].localeCompare(b[0]); // Fallback to alphabetic by roomId
                   }).map(([roomId, room]) => {
                     const msgCount = room.messages ? Object.keys(room.messages).length : 0;
+                    const usersSet = new Set();
+                    let latestTime = '';
+                    if (room.messages) {
+                      Object.values(room.messages).forEach(m => {
+                        if (m.user && m.user !== 'System') usersSet.add(m.user);
+                        if (m.time) latestTime = m.time;
+                      });
+                    }
+                    const usersList = Array.from(usersSet).join(' & ') || roomId.slice(0, 20) + '...';
+
                     return (
                       <div key={roomId} style={{ ...sty.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', border: selectedChat === roomId ? '1px solid #8b5cf6' : undefined }}
                         onClick={() => viewChat(roomId)}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontWeight: 600, fontSize: '0.85rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{roomId.slice(0, 30)}{roomId.length > 30 ? '...' : ''}</p>
-                          <p style={{ fontSize: '0.72rem', color: '#a1a1aa', margin: '0.2rem 0 0' }}>{msgCount} messages</p>
+                          <p style={{ fontWeight: 600, fontSize: '0.85rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{usersList}</p>
+                          <p style={{ fontSize: '0.72rem', color: '#a1a1aa', margin: '0.2rem 0 0' }}>
+                            {msgCount} messages {latestTime ? `• Last active: ${latestTime}` : ''}
+                          </p>
                         </div>
                         <div style={{ display: 'flex', gap: '0.4rem' }}>
                           <button onClick={(e) => { e.stopPropagation(); viewChat(roomId); }} style={sty.btnView}><Eye size={13} /></button>
