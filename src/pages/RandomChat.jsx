@@ -588,7 +588,7 @@ const RandomChat = () => {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       {/* Header */}
       <div style={{
         padding: '1rem', borderBottom: '1px solid var(--border-color)',
