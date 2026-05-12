@@ -41,6 +41,15 @@ const Meetups = () => {
     });
   };
 
+  const deleteMeetup = (meetupId) => {
+    if (!window.confirm('Delete this meetup?')) return;
+    setMeetups(prev => {
+      const updated = prev.filter(m => m.id !== meetupId);
+      localStorage.setItem('prattle_meetups', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const formatDate = (dateStr) => {
     const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`);
     const today = new Date();
@@ -92,7 +101,10 @@ const Meetups = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                   <h3 style={{ margin: 0 }}>{m.title}</h3>
                   {isHost && (
-                    <span style={{ backgroundColor: 'rgba(139,92,246,0.2)', color: 'var(--primary)', padding: '0.15rem 0.5rem', borderRadius: '1rem', fontSize: '0.7rem', fontWeight: '600' }}>HOST</span>
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <span style={{ backgroundColor: 'rgba(139,92,246,0.2)', color: 'var(--primary)', padding: '0.15rem 0.5rem', borderRadius: '1rem', fontSize: '0.7rem', fontWeight: '600' }}>HOST</span>
+                      <button onClick={() => deleteMeetup(m.id)} style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#ef4444', border: 'none', padding: '0.15rem 0.5rem', borderRadius: '1rem', fontSize: '0.7rem', fontWeight: '600', cursor: 'pointer' }}>Delete</button>
+                    </div>
                   )}
                 </div>
                 <p className="text-muted" style={{ margin: '0 0 1rem 0', fontSize: '0.9rem' }}>{m.desc}</p>

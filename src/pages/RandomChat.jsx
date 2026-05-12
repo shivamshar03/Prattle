@@ -33,6 +33,7 @@ const RandomChat = () => {
   const [callType, setCallType] = useState('voice'); // voice | video
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
+  const [incomingOffer, setIncomingOffer] = useState(null);
 
   // WebRTC refs
   const peerConnectionRef = useRef(null);
@@ -174,36 +175,8 @@ const RandomChat = () => {
     const unsub = subscribeSignaling(room, user.username, async (signal) => {
       try {
         if (signal.type === 'offer') {
-          // Incoming call — auto-accept
-          const incomingCallType = signal.callType || 'voice';
-          setCallType(incomingCallType);
-          setShowCall(true);
-          setCallStatus('connecting');
-          isCallActiveRef.current = true;
-
-          const mediaConstraints = {
-            audio: true,
-            video: incomingCallType === 'video',
-          };
-
-          const stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-          localStreamRef.current = stream;
-
-          if (incomingCallType === 'video' && localVideoRef.current) {
-            localVideoRef.current.srcObject = stream;
-          }
-
-          const pc = createPeerConnection(incomingCallType);
-          stream.getTracks().forEach(track => pc.addTrack(track, stream));
-
-          await pc.setRemoteDescription(new RTCSessionDescription(signal.data));
-          remoteDescriptionSetRef.current = true;
-          await flushPendingCandidates();
-
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          sendSignal(room, 'answer', answer, user.username);
-
+          // Store the incoming call offer to show Accept/Reject UI
+          setIncomingOffer(signal);
         } else if (signal.type === 'answer') {
           const pc = peerConnectionRef.current;
           if (pc && pc.signalingState === 'have-local-offer') {
@@ -228,6 +201,7 @@ const RandomChat = () => {
           }
 
         } else if (signal.type === 'end_call') {
+          setIncomingOffer(null);
           setShowCall(false);
           setCallStatus('idle');
           cleanupCall();
@@ -306,6 +280,52 @@ const RandomChat = () => {
     }
   };
 
+  const acceptCall = async () => {
+    if (!incomingOffer) return;
+    const signal = incomingOffer;
+    setIncomingOffer(null);
+    
+    const incomingCallType = signal.callType || 'voice';
+    setCallType(incomingCallType);
+    setShowCall(true);
+    setCallStatus('connecting');
+    isCallActiveRef.current = true;
+
+    try {
+      const mediaConstraints = {
+        audio: true,
+        video: incomingCallType === 'video',
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      localStreamRef.current = stream;
+
+      if (incomingCallType === 'video' && localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      const pc = createPeerConnection(incomingCallType);
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+      await pc.setRemoteDescription(new RTCSessionDescription(signal.data));
+      remoteDescriptionSetRef.current = true;
+      await flushPendingCandidates();
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      sendSignal(room, 'answer', answer, user.username);
+    } catch (err) {
+      console.error('[WebRTC] acceptCall error:', err);
+      alert('Could not access microphone/camera.');
+      endCall();
+    }
+  };
+
+  const rejectCall = () => {
+    setIncomingOffer(null);
+    sendSignal(room, 'end_call', {}, user.username);
+  };
+
   const endCall = () => {
     cleanupCall();
     setShowCall(false);
@@ -342,6 +362,36 @@ const RandomChat = () => {
   };
 
   const renderCallOverlay = () => {
+    if (incomingOffer) {
+      return (
+        <div className="call-overlay fade-in" style={{
+          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(9, 9, 11, 0.95)', zIndex: 100,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            width: '100px', height: '100px', borderRadius: '50%',
+            backgroundColor: 'var(--surface-light)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: '2rem', animation: 'pulse 1.5s infinite',
+            boxShadow: '0 0 30px rgba(139,92,246,0.3)',
+          }}>
+            {incomingOffer.callType === 'video' ? <Video size={48} color="var(--primary)" /> : <PhoneCall size={48} color="var(--primary)" />}
+          </div>
+          <h2 style={{ color: 'white', marginBottom: '0.5rem' }}>{stranger.username}</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '3rem' }}>Incoming {incomingOffer.callType} call...</p>
+          <div style={{ display: 'flex', gap: '2rem' }}>
+            <button onClick={rejectCall} style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#ef4444', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+              <PhoneOff size={28} />
+            </button>
+            <button onClick={acceptCall} style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#22c55e', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s', animation: 'pulse 1.5s infinite' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+              {incomingOffer.callType === 'video' ? <Video size={28} /> : <PhoneCall size={28} />}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (!showCall) return null;
 
     if (callType === 'video') {

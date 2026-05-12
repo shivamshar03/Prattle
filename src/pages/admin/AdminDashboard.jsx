@@ -228,7 +228,14 @@ const AdminDashboard = () => {
                 <div style={{ ...sty.card, textAlign: 'center', padding: '2rem', color: '#a1a1aa' }}>No active chats</div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '60vh', overflowY: 'auto' }}>
-                  {Object.entries(rooms).map(([roomId, room]) => {
+                  {Object.entries(rooms).sort((a, b) => {
+                    const aMsgs = Object.values(a[1].messages || {});
+                    const bMsgs = Object.values(b[1].messages || {});
+                    const aLatest = aMsgs.length > 0 ? aMsgs[aMsgs.length - 1].timestamp || 0 : 0;
+                    const bLatest = bMsgs.length > 0 ? bMsgs[bMsgs.length - 1].timestamp || 0 : 0;
+                    if (bLatest !== aLatest) return bLatest - aLatest; // Newest first
+                    return a[0].localeCompare(b[0]); // Fallback to alphabetic by roomId
+                  }).map(([roomId, room]) => {
                     const msgCount = room.messages ? Object.keys(room.messages).length : 0;
                     return (
                       <div key={roomId} style={{ ...sty.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', border: selectedChat === roomId ? '1px solid #8b5cf6' : undefined }}
