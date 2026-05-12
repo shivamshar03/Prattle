@@ -63,11 +63,11 @@ export const RealtimeProvider = ({ children }) => {
         // Remove matched user from queue
         await remove(ref(db, `matchmaking_queue/${matchKey}`));
 
-        // Notify BOTH users by writing to direct_requests
         await set(ref(db, `direct_requests/${matchUser.id}/${roomId}`), {
           room: roomId,
           fromUser: currentUser,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          isQueueMatch: true
         });
 
         // Return the match info to the caller (initiator)

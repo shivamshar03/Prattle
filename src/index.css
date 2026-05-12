@@ -233,6 +233,8 @@ input[type="time"].input-field {
 
 .main-content.immersive-view {
   padding: 0 !important;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===========================
@@ -402,8 +404,10 @@ input[type="time"].input-field {
     max-width: 440px;
     margin: 0 auto;
     padding: 0 !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    display: flex;
+    flex-direction: column;
     border-left: 1px solid rgba(255, 255, 255, 0.05);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(24, 24, 27, 0.80);

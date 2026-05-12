@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { Mail, Send, CheckCircle } from 'lucide-react';
+import { db } from '../store/firebase';
+import { ref, push, set } from 'firebase/database';
 
 const Contact = () => {
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In production, this would POST to an API/SMTP service
-    console.log('Contact form submitted:', form);
-    setSent(true);
+    try {
+      const msgRef = push(ref(db, 'contact_messages'));
+      await set(msgRef, {
+        ...form,
+        timestamp: Date.now()
+      });
+      setSent(true);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send message.');
+    }
   };
 
   return (

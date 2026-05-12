@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../store/AdminContext';
 import { db } from '../../store/firebase';
 import { ref, onValue, remove, get } from 'firebase/database';
-import { Shield, Users, MessageSquare, Calendar, LogOut, Trash2, Eye, RefreshCw, Search, UserX, Hash } from 'lucide-react';
+import { Shield, Users, MessageSquare, Calendar, LogOut, Trash2, Eye, RefreshCw, Search, UserX, Hash, Mail } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { admin, adminLogout } = useAdmin();
@@ -13,10 +13,11 @@ const AdminDashboard = () => {
   const [rooms, setRooms] = useState({});
   const [channels, setChannels] = useState({});
   const [meetups, setMeetups] = useState([]);
+  const [feedback, setFeedback] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [stats, setStats] = useState({ users: 0, rooms: 0, channels: 0, meetups: 0 });
+  const [stats, setStats] = useState({ users: 0, rooms: 0, channels: 0, meetups: 0, feedback: 0 });
 
   // Load online users
   useEffect(() => {
@@ -60,6 +61,17 @@ const AdminDashboard = () => {
     return () => unsub();
   }, []);
 
+  // Load feedback from Firebase
+  useEffect(() => {
+    const unsub = onValue(ref(db, 'contact_messages'), (snap) => {
+      const data = snap.val() || {};
+      const f = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+      setFeedback(f);
+      setStats(p => ({ ...p, feedback: f.length }));
+    });
+    return () => unsub();
+  }, []);
+
   const removeUser = async (userId) => {
     if (!window.confirm('Remove this user? They will be disconnected.')) return;
     try {
@@ -97,6 +109,15 @@ const AdminDashboard = () => {
     }
   };
 
+  const deleteFeedback = async (id) => {
+    if (!window.confirm('Delete this message?')) return;
+    try {
+      await remove(ref(db, `contact_messages/${id}`));
+    } catch (error) {
+      alert('Failed to delete message: ' + error.message);
+    }
+  };
+
   const viewChat = async (roomId) => {
     setSelectedChat(roomId);
     const snap = await get(ref(db, `rooms/${roomId}/messages`));
@@ -125,6 +146,7 @@ const AdminDashboard = () => {
     { id: 'chats', label: 'Chats', icon: <MessageSquare size={18} />, count: stats.rooms },
     { id: 'channels', label: 'Channels', icon: <Hash size={18} />, count: stats.channels },
     { id: 'meetups', label: 'Meetups', icon: <Calendar size={18} />, count: stats.meetups },
+    { id: 'feedback', label: 'Feedback', icon: <Mail size={18} />, count: stats.feedback },
   ];
 
   const sty = {
@@ -162,6 +184,7 @@ const AdminDashboard = () => {
             { label: 'Chat Rooms', value: stats.rooms, color: '#8b5cf6', icon: '💬' },
             { label: 'Channels', value: stats.channels, color: '#3b82f6', icon: '#️⃣' },
             { label: 'Meetups', value: stats.meetups, color: '#f97316', icon: '📅' },
+            { label: 'Feedback', value: stats.feedback, color: '#eab308', icon: '✉️' },
           ].map(s => (
             <div key={s.label} style={sty.stat}>
               <p style={{ fontSize: '1.8rem', fontWeight: 700, color: s.color, marginBottom: '0.25rem' }}>{s.icon} {s.value}</p>
@@ -367,6 +390,34 @@ const AdminDashboard = () => {
                       <span>📅 {m.date} at {m.time}</span>
                       <span>👤 Host: {m.host}</span>
                       <span>👥 {m.attendees?.length || 0} attending</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* FEEDBACK TAB */}
+        {tab === 'feedback' && (
+          <div>
+            {feedback.length === 0 ? (
+              <div style={{ ...sty.card, textAlign: 'center', padding: '3rem', color: '#a1a1aa' }}>
+                <Mail size={40} style={{ marginBottom: '0.75rem', opacity: 0.4 }} /><p>No messages received</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: '1fr' }}>
+                {feedback.sort((a,b) => b.timestamp - a.timestamp).map(f => (
+                  <div key={f.id} style={{ ...sty.card, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{f.subject || 'No Subject'}</h4>
+                        <p style={{ fontSize: '0.75rem', color: '#a1a1aa', margin: 0 }}>From: {f.name} ({f.email}) • {new Date(f.timestamp).toLocaleString()}</p>
+                      </div>
+                      <button onClick={() => deleteFeedback(f.id)} style={sty.btnDanger}><Trash2 size={13} /></button>
+                    </div>
+                    <div style={{ background: 'rgba(9,9,11,0.5)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem', wordBreak: 'break-word', whiteSpace: 'pre-wrap', marginTop: '0.25rem' }}>
+                      {f.message}
                     </div>
                   </div>
                 ))}

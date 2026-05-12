@@ -8,12 +8,19 @@ const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { subscribeToMatchRequests } = useRealtime();
+  const { subscribeToMatchRequests, sendMessage } = useRealtime();
+  const [incomingChatReq, setIncomingChatReq] = React.useState(null);
 
   useEffect(() => {
     if (!user) return;
     const unsub = subscribeToMatchRequests(user.id, (matchData) => {
-      navigate('/chat/random', { state: { room: matchData.room, stranger: matchData.fromUser } });
+      if (matchData.isQueueMatch) {
+        // Auto-join if it's a matchmaking queue result
+        navigate('/chat/random', { state: { room: matchData.room, stranger: matchData.fromUser } });
+      } else {
+        // Otherwise it's a direct click, show popup
+        setIncomingChatReq(matchData);
+      }
     });
     return () => unsub();
   }, [user, subscribeToMatchRequests, navigate]);
@@ -97,6 +104,48 @@ const Layout = () => {
           </NavLink>
         ))}
       </nav>
+
+      {/* Incoming Chat Request Popup (Global) */}
+      {incomingChatReq && (
+        <div className="fade-in" style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(9, 9, 11, 0.85)', zIndex: 10000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--surface-light)', padding: '2rem', borderRadius: '16px',
+            textAlign: 'center', maxWidth: '320px', border: '1px solid var(--border-color)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+          }}>
+            <h3 style={{ margin: '0 0 1rem 0' }}>Chat Request</h3>
+            <p style={{ margin: '0 0 2rem 0', color: 'var(--text-muted)' }}>
+              <strong style={{ color: 'var(--primary)' }}>{incomingChatReq.fromUser.username}</strong> wants to chat with you!
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                className="btn-outline" 
+                onClick={() => {
+                  sendMessage(incomingChatReq.room, `${user.username} rejected the chat request.`, 'System');
+                  setIncomingChatReq(null);
+                }} 
+                style={{ borderColor: '#ef4444', color: '#ef4444', flex: 1, padding: '0.8rem' }}
+              >
+                No
+              </button>
+              <button 
+                className="btn-primary" 
+                onClick={() => {
+                  navigate('/chat/random', { state: { room: incomingChatReq.room, stranger: incomingChatReq.fromUser } });
+                  setIncomingChatReq(null);
+                }} 
+                style={{ flex: 1, padding: '0.8rem' }}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
