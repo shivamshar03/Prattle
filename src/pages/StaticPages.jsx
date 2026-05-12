@@ -49,12 +49,23 @@ export const About = () => (
       </div>
     </div>
 
-    <div className="glass-panel">
+    <div className="glass-panel" style={{ marginBottom: '1.5rem' }}>
       <h3 style={{ marginBottom: '0.5rem', color: 'var(--primary)' }}>Built for Indore 🏙️</h3>
       <p style={{ fontSize: '0.9rem', lineHeight: '1.6', color: 'var(--text-muted)' }}>
         Prattle is hyper-local. We're focused on making meaningful connections happen in Indore — from Palasia coffee shops to Rajwada evening walks.
         Because the best connections happen when you can actually meet the person.
       </p>
+    </div>
+
+    <div className="glass-panel" style={{ background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+      <h3 style={{ marginBottom: '0.75rem', color: '#22c55e' }}>Join Our Community 🌟</h3>
+      <p style={{ fontSize: '0.95rem', lineHeight: '1.7', marginBottom: '1rem', color: 'var(--text-main)' }}>
+        Want to stay updated, connect with other members, and be part of the core Prattle family? Join our official WhatsApp group!
+      </p>
+      <a href="https://chat.whatsapp.com/FIRhaIZX3EBEs07pLkbC4N" target="_blank" rel="noopener noreferrer"
+        style={{ display: 'inline-block', backgroundColor: '#25D366', color: 'white', textDecoration: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}>
+        Join WhatsApp Group
+      </a>
     </div>
   </Page>
 );
